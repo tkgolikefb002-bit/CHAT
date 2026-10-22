@@ -40,7 +40,7 @@
 </div>
 
 <script>
-    // Lấy thông số từ URL (Ví dụ: yourwebsite.com/?amount=30000&code=AUTO123456)
+    // Lấy thông số từ URL
     const urlParams = new URLSearchParams(window.location.search);
     const amount = urlParams.get('amount') || '30000';
     const code = urlParams.get('code') || 'AUTO' + Math.floor(Date.now() / 1000);
@@ -50,7 +50,7 @@
     document.getElementById('lblAmount').innerText = Number(amount).toLocaleString('vi-VN');
     document.getElementById('lblCode').innerText = code;
 
-    // Load ảnh QR động từ VietQR API dựa trên số tiền và nội dung ngẫu nhiên
+    // Load ảnh QR động từ VietQR API
     const qrUrl = `https://img.vietqr.io/image/ACB-4702001-compact2.png?amount=${amount}&addInfo=${code}`;
     document.getElementById('qrImage').src = qrUrl;
 
@@ -67,9 +67,14 @@
             .then(res => res.json())
             .then(data => {
                 if (data.status === 'success') {
-                    document.getElementById('lblStatus').innerText = "✅ Thanh toán thành công!";
+                    document.getElementById('lblStatus').innerText = "✅ Thanh toán thành công! Đang đóng trang...";
                     document.getElementById('lblStatus').className = "status success";
                     clearInterval(checkInterval);
+
+                    // Tự động đóng tab trình duyệt sau 2 giây khi thanh toán thành công
+                    setTimeout(() => {
+                        window.close();
+                    }, 2000);
                 }
             })
             .catch(err => console.log(err));
