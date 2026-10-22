@@ -4,6 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Cổng Thanh Toán Tự Động</title>
+    <!-- Sử dụng Tailwind CSS để hỗ trợ các hiệu ứng chuyển động mượt mà -->
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
     <style>
         body { font-family: Arial, sans-serif; background-color: #f0f2f5; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }
         .card { background: white; padding: 25px; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); width: 340px; text-align: center; }
@@ -14,7 +16,6 @@
         .info { background: #f9f9f9; padding: 12px; border-radius: 6px; text-align: left; font-size: 13px; margin-bottom: 15px; line-height: 1.6; border: 1px solid #eee; }
         .info b { color: #333; }
         .highlight { color: #D9534F; font-weight: bold; }
-        .status { font-weight: bold; color: #D9534F; font-size: 14px; }
         .success { color: #28A745 !important; }
     </style>
 </head>
@@ -36,7 +37,14 @@
         <div><b>Nội dung CK:</b> <span id="lblCode" style="color: #0084FF; font-weight: bold;">...</span></div>
     </div>
 
-    <div class="status" id="lblStatus">⏳ Đang chờ thanh toán...</div>
+    <!-- Khung trạng thái chờ thanh toán với hiệu ứng xoay và nhấp nháy mượt mà -->
+    <div id="lblStatus" class="flex items-center justify-center space-x-2.5 bg-amber-500/10 border border-amber-500/20 py-2.5 px-4 rounded-xl text-amber-600 text-xs font-medium">
+        <svg class="animate-spin -ml-1 mr-1.5 h-4 w-4 text-amber-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+        </svg>
+        <span class="animate-pulse font-semibold tracking-wide">Đang chờ thanh toán... Vui lòng không tắt web!</span>
+    </div>
 </div>
 
 <script>
@@ -67,8 +75,10 @@
             .then(res => res.json())
             .then(data => {
                 if (data.status === 'success') {
-                    document.getElementById('lblStatus').innerText = "✅ Thanh toán thành công! Đang đóng trang...";
-                    document.getElementById('lblStatus').className = "status success";
+                    const statusEl = document.getElementById('lblStatus');
+                    statusEl.className = "flex items-center justify-center space-x-2 bg-emerald-500/10 border border-emerald-500/20 py-2.5 px-4 rounded-xl text-emerald-600 text-xs font-medium success";
+                    statusEl.innerHTML = `<span>✅ Thanh toán thành công! Đang đóng trang...</span>`;
+                    
                     clearInterval(checkInterval);
 
                     // Tự động đóng tab trình duyệt sau 2 giây khi thanh toán thành công
