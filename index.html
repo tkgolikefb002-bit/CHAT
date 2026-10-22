@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cổng Thanh Toán Tự Động</title>
+    <style>
+        body { font-family: Arial, sans-serif; background-color: #f0f2f5; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }
+        .card { background: white; padding: 25px; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); width: 340px; text-align: center; }
+        h2 { color: #1877F2; margin-bottom: 5px; font-size: 20px; }
+        .sub { color: #65676B; font-size: 13px; margin-bottom: 15px; }
+        .qr-box { background: #fff; padding: 10px; border: 1px solid #ddd; border-radius: 8px; display: inline-block; margin-bottom: 15px; }
+        img { width: 190px; height: 190px; display: block; }
+        .info { background: #f9f9f9; padding: 12px; border-radius: 6px; text-align: left; font-size: 13px; margin-bottom: 15px; line-height: 1.6; border: 1px solid #eee; }
+        .info b { color: #333; }
+        .highlight { color: #D9534F; font-weight: bold; }
+        .status { font-weight: bold; color: #D9534F; font-size: 14px; }
+        .success { color: #28A745 !important; }
+    </style>
+</head>
+<body>
+
+<div class="card">
+    <h2>THANH TOÁN TỰ ĐỘNG</h2>
+    <div class="sub">Quét mã QR hoặc chuyển khoản thủ công</div>
+
+    <div class="qr-box">
+        <img id="qrImage" src="" alt="Mã QR thanh toán">
+    </div>
+
+    <div class="info" id="infoBox">
+        <div><b>Ngân hàng:</b> ACB</div>
+        <div><b>Số tài khoản:</b> <span style="color: #1877F2; font-weight: bold;">4702001</span></div>
+        <div><b>Chủ tài khoản:</b> NGO THANH SON</div>
+        <div><b>Số tiền:</b> <span id="lblAmount" class="highlight">...</span> VNĐ</div>
+        <div><b>Nội dung CK:</b> <span id="lblCode" style="color: #0084FF; font-weight: bold;">...</span></div>
+    </div>
+
+    <div class="status" id="lblStatus">⏳ Đang chờ thanh toán...</div>
+</div>
+
+<script>
+    // Lấy thông số từ URL (Ví dụ: yourwebsite.com/?amount=30000&code=AUTO123456)
+    const urlParams = new URLSearchParams(window.location.search);
+    const amount = urlParams.get('amount') || '30000';
+    const code = urlParams.get('code') || 'AUTO' + Math.floor(Date.now() / 1000);
+    const hwid = urlParams.get('hwid') || 'DEFAULT_HWID';
+
+    // Hiển thị lên giao diện web
+    document.getElementById('lblAmount').innerText = Number(amount).toLocaleString('vi-VN');
+    document.getElementById('lblCode').innerText = code;
+
+    // Load ảnh QR động từ VietQR API dựa trên số tiền và nội dung ngẫu nhiên
+    const qrUrl = `https://img.vietqr.io/image/ACB-4702001-compact2.png?amount=${amount}&addInfo=${code}`;
+    document.getElementById('qrImage').src = qrUrl;
+
+    // Đăng ký đơn hàng lên Cloudflare Worker ngay khi mở web
+    fetch(`https://chat.tkgolikefb002.workers.dev/create_order`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ hwid: hwid, amount: Number(amount), code: code })
+    }).catch(err => console.log(err));
+
+    // Vòng lặp kiểm tra trạng thái thanh toán từ SePay Webhook qua Worker
+    const checkInterval = setInterval(() => {
+        fetch(`https://chat.tkgolikefb002.workers.dev/check?code=${code}`)
+            .then(res => res.json())
+            .then(data => {
+                if (data.status === 'success') {
+                    document.getElementById('lblStatus').innerText = "✅ Thanh toán thành công!";
+                    document.getElementById('lblStatus').className = "status success";
+                    clearInterval(checkInterval);
+                }
+            })
+            .catch(err => console.log(err));
+    }, 3000);
+</script>
+
+</body>
+</html>
